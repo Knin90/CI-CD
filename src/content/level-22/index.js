@@ -1,0 +1,31 @@
+export const meta = {
+  id: 22,
+  title: 'Troubleshooting profesional',
+  stage: 6,
+  description: 'El nivel más grande: fallos de pipeline, build, dependencias, runners, autenticación, Docker, Kubernetes, Terraform y la metodología de debugging.',
+  prerequisite: 'Nivel 21 — CI/CD Cloud',
+  next: 'Nivel 23 — Buenas prácticas y arquitectura',
+}
+
+export const modules = [
+  { id: 1, title: 'Pipeline failure' },
+  { id: 2, title: 'Build failure' },
+  { id: 3, title: 'Dependency failure' },
+  { id: 4, title: 'Test failure' },
+  { id: 5, title: 'Runner failure' },
+  { id: 6, title: 'Authentication failure' },
+  { id: 7, title: 'Secret failure' },
+  { id: 8, title: 'Docker failure' },
+  { id: 9, title: 'Registry failure' },
+  { id: 10, title: 'Kubernetes deployment failure' },
+  { id: 11, title: 'Terraform failure' },
+  { id: 12, title: 'Ansible failure' },
+  { id: 13, title: 'Network failure' },
+  { id: 14, title: 'Timeout' },
+  { id: 15, title: 'Artifact failure' },
+  { id: 16, title: 'Permission errors' },
+  { id: 17, title: 'Environment problems' },
+  { id: 18, title: 'Rollback failure' },
+  { id: 19, title: 'Pipeline debugging' },
+  { id: 20, title: 'Production incident' },
+]

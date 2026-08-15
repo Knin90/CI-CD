@@ -1,0 +1,31 @@
+export const meta = {
+  id: 23,
+  title: 'Buenas prácticas y arquitectura',
+  stage: 7,
+  description: 'Pipeline as Code, DRY, pipelines pequeños, feedback rápido, artefactos inmutables, aislamiento de entornos y la arquitectura de un pipeline profesional.',
+  prerequisite: 'Nivel 22 — Troubleshooting profesional',
+  next: 'Nivel 24 — Proyecto profesional',
+}
+
+export const modules = [
+  { id: 1, title: 'Pipeline as Code' },
+  { id: 2, title: 'DRY' },
+  { id: 3, title: 'Reusable workflows' },
+  { id: 4, title: 'Small pipelines' },
+  { id: 5, title: 'Fast feedback' },
+  { id: 6, title: 'Parallelization' },
+  { id: 7, title: 'Caching' },
+  { id: 8, title: 'Immutable artifacts' },
+  { id: 9, title: 'Build once, deploy many' },
+  { id: 10, title: 'Environment isolation' },
+  { id: 11, title: 'Least privilege' },
+  { id: 12, title: 'Secret management' },
+  { id: 13, title: 'Branch protection' },
+  { id: 14, title: 'Code review' },
+  { id: 15, title: 'Quality gates' },
+  { id: 16, title: 'Security gates' },
+  { id: 17, title: 'Observability' },
+  { id: 18, title: 'Rollback strategy' },
+  { id: 19, title: 'Pipeline documentation' },
+  { id: 20, title: 'Maintainability' },
+]
