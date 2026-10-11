@@ -5,17 +5,17 @@ import Inline from '../components/level/InlineText'
 
 // «¿Qué ocurre internamente?»: la máquina isométrica del flujo y, debajo,
 // los pasos completos sincronizados con el paquete.
-export default function InternalsFlow({ steps }) {
+export default function InternalsFlow({ steps, color }) {
   const [cur, setCur] = useState(0)
   const stageRef = useRef(null)
   // firma estable: el contenido se vuelve a parsear en cada render del módulo
   const sig = JSON.stringify(steps)
   const stable = useMemo(() => JSON.parse(sig), [sig])
-  const build = useCallback(() => buildFlow(stable, { fig: 'Fig 1', title: 'Flujo interno' }), [stable])
+  const build = useCallback(() => buildFlow(stable, { fig: 'Fig 1' }), [stable])
   const go = i => stageRef.current?.dispatchEvent(new CustomEvent('k-go', { detail: i }))
   return (
     <div className="internals-flow">
-      <IsoFigure build={build} onStep={setCur} stageRef={stageRef}>
+      <IsoFigure build={build} color={color} onStep={setCur} stageRef={stageRef}>
         <ol className="if-steps">
           {stable.map((s, i) => (
             <li key={i} className={i === cur ? 'on' : undefined}>
