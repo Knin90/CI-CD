@@ -14,8 +14,10 @@ function Swatch({ mark }) {
   )
 }
 
-export default function IsoFigure({ build, color, fig }) {
+export default function IsoFigure({ build, color, fig, onStep, stageRef: outerRef, children }) {
   const f = useMemo(() => build(), [build])
+  const stepRef = useRef(onStep)
+  stepRef.current = onStep
   const stageRef = useRef(null)
   const readoutRef = useRef(null)
 
@@ -26,8 +28,9 @@ export default function IsoFigure({ build, color, fig }) {
       const el = readoutRef.current
       if (el && el.textContent !== text) el.textContent = text
     }
-    return f.mount(stage, say)
-  }, [f])
+    if (outerRef) outerRef.current = stage
+    return f.mount(stage, say, i => stepRef.current && stepRef.current(i))
+  }, [f, outerRef])
 
   return (
     <figure className="k-fig" style={color ? { '--c': color } : undefined}>
@@ -50,7 +53,8 @@ export default function IsoFigure({ build, color, fig }) {
           dangerouslySetInnerHTML={{ __html: f.svg }}
         />
       </div>
-      {(f.keys?.length || f.caption) && (
+      {children}
+      {(f.keys?.length > 0 || f.caption) && (
         <figcaption className="k-legend">
           {f.keys?.length > 0 && (
             <span className="k-keys">

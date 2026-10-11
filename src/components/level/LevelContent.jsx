@@ -3,6 +3,8 @@ import CodeBlock from './CodeBlock'
 import FlowDiagram, { looksLikeFlow } from './FlowDiagram'
 import Inline from './InlineText'
 import useReveal from '../../hooks/useReveal'
+import InternalsFlow from '../../iso/InternalsFlow'
+import { parseFlow } from '../../iso/flowParse'
 
 /* ============================================================
    Convierte el markdown de un módulo en las secciones y bloques
@@ -373,6 +375,18 @@ function SectionBlocks({ section }) {
             renderBlock(b, i)
           )
         )}
+      </div>
+    )
+  }
+
+  if (type === 'internals') {
+    return (
+      <div className="b card card-internals">
+        <span className="kicker">{kicker}</span>
+        {blocks.map((b, i) => {
+          const steps = b.type === 'code' ? parseFlow(b.code) : null
+          return steps ? <InternalsFlow key={i} steps={steps} /> : renderBlock(b, i)
+        })}
       </div>
     )
   }
