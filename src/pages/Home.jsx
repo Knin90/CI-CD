@@ -1,26 +1,21 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { levels, stages } from '../registry'
 import { metaRegistry } from '../content/metaRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import CountUp from '../components/CountUp'
+import IsoPillars from '../components/IsoPillars'
+import { stageColor } from '../stageColors'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
 import useCourseProgress from '../hooks/useCourseProgress'
 import './landing.css'
 
 const pad = n => String(n).padStart(2, '0')
 
-// Colores funcionales de las etapas (paleta terminal)
-const stageColor = {
-  green: '#00DF82',
-  cyan: '#2EC4A0',
-  yellow: '#f0e68c',
-  red: '#f85149',
-}
-
 export default function Home() {
   const landingRef = useRef(null)
   const location = useLocation()
+  const navigate = useNavigate()
   const [showTop, setShowTop] = useState(false)
   const [activeStage, setActiveStage] = useState('all')
   // Evita animar los nodos en la carga inicial: solo al filtrar
@@ -280,6 +275,35 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          <section className="stages-section" id="etapas" aria-labelledby="etapas-title">
+            <div className="learning-path-title" id="etapas-title">Etapas del curso</div>
+            <div className="stages-grid">
+              {stages.map(s => {
+                const stLevels = levels.filter(l => l.stage === s.id)
+                const mods = stLevels.reduce((n, l) => n + (metaRegistry[l.id]?.modules?.length || l.moduleCount || 0), 0)
+                return (
+                  <article className="stage-card" key={s.id} style={{ '--c': stageColor[s.color] }}>
+                    <header className="stage-card-head">
+                      <span className="stage-card-num">Etapa {s.id}</span>
+                      <h3 className="stage-card-title">{s.title}</h3>
+                      <span className="stage-card-meta">{stLevels.length} niveles · {mods} módulos</span>
+                    </header>
+                    <IsoPillars
+                      items={stLevels.map(l => ({
+                        letter: pad(l.id),
+                        title: l.title,
+                        sub: `${metaRegistry[l.id]?.modules?.length || l.moduleCount} módulos`,
+                      }))}
+                      color={stageColor[s.color]}
+                      label={`Etapa ${s.id}, ${s.title}: ${stLevels.map(l => `nivel ${l.id} ${l.title}`).join(', ')}`}
+                      onSelect={i => navigate(nodeTo(stLevels[i]))}
+                    />
+                  </article>
+                )
+              })}
+            </div>
+          </section>
         </div>
       </main>
 

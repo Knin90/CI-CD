@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getLevel, levels, stages } from '../registry'
 import { contentRegistry } from '../content/contentRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import ReadingProgress from '../components/ReadingProgress'
+import IsoPillars from '../components/IsoPillars'
+import { colorOf } from '../stageColors'
 import useLevelProgress from '../hooks/useLevelProgress'
 import useScrollMemory from '../hooks/useScrollMemory'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
@@ -16,6 +18,7 @@ const stateLevelRef = { current: null }
 
 export default function LevelPage() {
   const { levelId } = useParams()
+  const navigate = useNavigate()
   useScrollMemory()
   const pageRef = useRef(null)
   useRevealOnScroll(pageRef)
@@ -84,6 +87,8 @@ export default function LevelPage() {
   }
 
   const stage = stages.find(s => s.id === meta.stage)
+  const stageLevels = levels.filter(l => l.stage === stage?.id)
+  const stageIdx = stageLevels.findIndex(l => l.id === level.id)
   const ctaLabel = allDone
     ? (nextLevel ? 'Ir al siguiente nivel' : 'Nivel completado')
     : count > 0
@@ -130,6 +135,37 @@ export default function LevelPage() {
             </div>
           </div>
         </section>
+
+        {/* ---------- ETAPA (animación) ---------- */}
+        {stageLevels.length > 0 && (
+          <section className="container">
+            <div className="level-stage" data-reveal>
+              <div className="level-stage-head">
+                <span className="kicker">Etapa {stage.id} de {stages.length}</span>
+                <h2 className="level-stage-title">{stage.title}</h2>
+                <p className="level-stage-sub">
+                  Este es el nivel {stageIdx + 1} de {stageLevels.length} de la etapa. Recorré los pilares para ver
+                  el resto de niveles.
+                </p>
+              </div>
+              <IsoPillars
+                items={stageLevels.map(l => ({
+                  letter: pad(l.id),
+                  title: contentRegistry[l.id]?.meta.title || l.title,
+                  sub: l.id === level.id ? 'Nivel actual' : `${contentRegistry[l.id]?.modules.length || l.moduleCount} módulos`,
+                }))}
+                color={colorOf(stage)}
+                homeIdx={stageIdx}
+                autoStart={false}
+                label={`Etapa ${stage.id}, ${stage.title}`}
+                onSelect={i => {
+                  const l = stageLevels[i]
+                  if (l && l.id !== level.id) navigate(`/nivel/${l.id}`)
+                }}
+              />
+            </div>
+          </section>
+        )}
 
         {/* ---------- PROGRESO ---------- */}
         <section className="container">
