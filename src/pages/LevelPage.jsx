@@ -1,14 +1,17 @@
-import { useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getLevel, levels, stages } from '../registry'
 import { contentRegistry } from '../content/contentRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import ReadingProgress from '../components/ReadingProgress'
+import { colorOf } from '../stageColors'
 import useLevelProgress from '../hooks/useLevelProgress'
 import useScrollMemory from '../hooks/useScrollMemory'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
 import { readLevelReading } from '../hooks/progressStorage'
 import './level.css'
+
+const StageFigure = lazy(() => import('../iso/StageFigure'))
 
 const pad = n => String(n).padStart(2, '0')
 
@@ -84,6 +87,8 @@ export default function LevelPage() {
   }
 
   const stage = stages.find(s => s.id === meta.stage)
+  const stageLevels = levels.filter(l => l.stage === stage?.id)
+  const stageIdx = stageLevels.findIndex(l => l.id === level.id)
   const ctaLabel = allDone
     ? (nextLevel ? 'Ir al siguiente nivel' : 'Nivel completado')
     : count > 0
@@ -130,6 +135,38 @@ export default function LevelPage() {
             </div>
           </div>
         </section>
+
+        {/* ---------- ETAPA (animación) ---------- */}
+        {stageLevels.length > 0 && (
+          <section className="container">
+            <div className="level-stage" data-reveal>
+              <div className="level-stage-head">
+                <span className="kicker">Etapa {stage.id} de {stages.length}</span>
+                <h2 className="level-stage-title">{stage.title}</h2>
+                <p className="level-stage-sub">
+                  Este es el nivel {stageIdx + 1} de {stageLevels.length} de la etapa. La figura muestra la idea
+                  central de la etapa: movela con el cursor o con las flechas.
+                </p>
+                <nav className="level-stage-levels" aria-label={`Niveles de la etapa ${stage.id}`}>
+                  {stageLevels.map(l => (
+                    <Link
+                      key={l.id}
+                      className={`level-stage-level${l.id === level.id ? ' cur' : ''}`}
+                      to={`/nivel/${l.id}`}
+                      aria-current={l.id === level.id ? 'page' : undefined}
+                    >
+                      <span className="n">{pad(l.id)}</span>
+                      {contentRegistry[l.id]?.meta.title || l.title}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+              <Suspense fallback={<div className="level-stage-ph" aria-hidden="true" />}>
+                <StageFigure stageId={stage.id} color={colorOf(stage)} fig={`Fig ${stage.id}`} />
+              </Suspense>
+            </div>
+          </section>
+        )}
 
         {/* ---------- PROGRESO ---------- */}
         <section className="container">

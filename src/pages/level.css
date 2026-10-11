@@ -1327,3 +1327,71 @@
     animation: none !important;
   }
 }
+
+/* ---------- Etapa del nivel: animación isométrica ---------- */
+.level-page .level-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 28px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.level-page .level-stage-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin-top: 4px;
+}
+.level-page .level-stage-sub {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.level-page .level-stage-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+.level-page .level-stage-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .level-page .level-stage-level:hover { color: var(--fg); }
+}
+.level-page .level-stage-level.cur { color: var(--fg); font-weight: 600; }
+.level-page .level-stage-level .n {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.level-page .level-stage-level.cur .n {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.level-page .level-stage-level:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.level-page .level-stage-ph { aspect-ratio: 600 / 430; }
+@media (max-width: 760px) {
+  .level-page .level-stage {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+}

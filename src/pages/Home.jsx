@@ -1,22 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { levels, stages } from '../registry'
 import { metaRegistry } from '../content/metaRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import CountUp from '../components/CountUp'
+import { stageColor } from '../stageColors'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
 import useCourseProgress from '../hooks/useCourseProgress'
 import './landing.css'
 
-const pad = n => String(n).padStart(2, '0')
+// Figuras isométricas por etapa: chunk aparte para no cargar la landing
+const StageFigure = lazy(() => import('../iso/StageFigure'))
 
-// Colores funcionales de las etapas (paleta terminal)
-const stageColor = {
-  green: '#00DF82',
-  cyan: '#2EC4A0',
-  yellow: '#f0e68c',
-  red: '#f85149',
-}
+const pad = n => String(n).padStart(2, '0')
 
 export default function Home() {
   const landingRef = useRef(null)
@@ -280,6 +276,36 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          <section className="stages-section" id="etapas" aria-labelledby="etapas-title">
+            <div className="learning-path-title" id="etapas-title">Etapas del curso</div>
+            <div className="stages-grid">
+              {stages.map(s => {
+                const stLevels = levels.filter(l => l.stage === s.id)
+                const mods = stLevels.reduce((n, l) => n + (metaRegistry[l.id]?.modules?.length || l.moduleCount || 0), 0)
+                return (
+                  <article className="stage-card" key={s.id} style={{ '--c': stageColor[s.color] }}>
+                    <header className="stage-card-head">
+                      <span className="stage-card-num">Etapa {s.id}</span>
+                      <h3 className="stage-card-title">{s.title}</h3>
+                      <span className="stage-card-meta">{stLevels.length} niveles · {mods} módulos</span>
+                    </header>
+                    <Suspense fallback={<div className="stage-fig-ph" aria-hidden="true" />}>
+                      <StageFigure stageId={s.id} color={stageColor[s.color]} fig={`Fig ${s.id}`} />
+                    </Suspense>
+                    <nav className="stage-card-levels" aria-label={`Niveles de la etapa ${s.id}`}>
+                      {stLevels.map(l => (
+                        <Link key={l.id} className="stage-level" to={nodeTo(l)}>
+                          <span className="stage-level-n">{pad(l.id)}</span>
+                          {l.title}
+                        </Link>
+                      ))}
+                    </nav>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
         </div>
       </main>
 
