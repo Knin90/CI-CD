@@ -309,7 +309,7 @@ function parseDef(item) {
 
 /* ---------- Secciones ---------- */
 
-function SectionBlocks({ section }) {
+function SectionBlocks({ section, accent }) {
   const { type, kicker, blocks } = section
   if (!blocks.length) return null
 
@@ -385,7 +385,7 @@ function SectionBlocks({ section }) {
         <span className="kicker">{kicker}</span>
         {blocks.map((b, i) => {
           const steps = b.type === 'code' ? parseFlow(b.code) : null
-          return steps ? <InternalsFlow key={i} steps={steps} /> : renderBlock(b, i)
+          return steps ? <InternalsFlow key={i} steps={steps} color={accent} /> : renderBlock(b, i)
         })}
       </div>
     )
@@ -493,7 +493,7 @@ function QuizSection({ kicker, questions, answers }) {
   )
 }
 
-export default function ModuleContent({ content }) {
+export default function ModuleContent({ content, accent }) {
   const { sections } = parseModule(content)
   // Pair each quiz section with the immediately following answers section
   for (let i = 0; i < sections.length; i++) {
@@ -504,5 +504,5 @@ export default function ModuleContent({ content }) {
       sections[i].answerItems = answerItems
     }
   }
-  return sections.map((sec, i) => <SectionBlocks key={i} section={sec} />)
+  return sections.map((sec, i) => <SectionBlocks key={i} section={sec} accent={accent} />)
 }

@@ -9,6 +9,7 @@ import ReadingProgress from '../components/ReadingProgress'
 import useLevelProgress from '../hooks/useLevelProgress'
 import useScrollMemory from '../hooks/useScrollMemory'
 import { saveReadingPct } from '../hooks/progressStorage'
+import { colorOf } from '../stageColors'
 import './level.css'
 
 const pad = n => String(n).padStart(2, '0')
@@ -253,7 +254,7 @@ export default function ModulePage() {
         {/* ---------- CONTENIDO ---------- */}
         <div className={`container module-body${enterClass}`} key={module.id}>
           {content ? (
-            <ModuleContent content={content} />
+            <ModuleContent content={content} accent={colorOf(stage)} />
           ) : (
             <div className="b card">
               <span className="kicker">Próximamente</span>
