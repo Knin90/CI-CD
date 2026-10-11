@@ -1,21 +1,22 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { levels, stages } from '../registry'
 import { metaRegistry } from '../content/metaRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import CountUp from '../components/CountUp'
-import IsoPillars from '../components/IsoPillars'
 import { stageColor } from '../stageColors'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
 import useCourseProgress from '../hooks/useCourseProgress'
 import './landing.css'
+
+// Figuras isométricas por etapa: chunk aparte para no cargar la landing
+const StageFigure = lazy(() => import('../iso/StageFigure'))
 
 const pad = n => String(n).padStart(2, '0')
 
 export default function Home() {
   const landingRef = useRef(null)
   const location = useLocation()
-  const navigate = useNavigate()
   const [showTop, setShowTop] = useState(false)
   const [activeStage, setActiveStage] = useState('all')
   // Evita animar los nodos en la carga inicial: solo al filtrar
@@ -289,16 +290,17 @@ export default function Home() {
                       <h3 className="stage-card-title">{s.title}</h3>
                       <span className="stage-card-meta">{stLevels.length} niveles · {mods} módulos</span>
                     </header>
-                    <IsoPillars
-                      items={stLevels.map(l => ({
-                        letter: pad(l.id),
-                        title: l.title,
-                        sub: `${metaRegistry[l.id]?.modules?.length || l.moduleCount} módulos`,
-                      }))}
-                      color={stageColor[s.color]}
-                      label={`Etapa ${s.id}, ${s.title}: ${stLevels.map(l => `nivel ${l.id} ${l.title}`).join(', ')}`}
-                      onSelect={i => navigate(nodeTo(stLevels[i]))}
-                    />
+                    <Suspense fallback={<div className="stage-fig-ph" aria-hidden="true" />}>
+                      <StageFigure stageId={s.id} color={stageColor[s.color]} fig={`Fig ${s.id}`} />
+                    </Suspense>
+                    <nav className="stage-card-levels" aria-label={`Niveles de la etapa ${s.id}`}>
+                      {stLevels.map(l => (
+                        <Link key={l.id} className="stage-level" to={nodeTo(l)}>
+                          <span className="stage-level-n">{pad(l.id)}</span>
+                          {l.title}
+                        </Link>
+                      ))}
+                    </nav>
                   </article>
                 )
               })}

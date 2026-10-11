@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Suspense, lazy, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { getLevel, levels, stages } from '../registry'
 import { contentRegistry } from '../content/contentRegistry'
 import ThemeToggle from '../components/ThemeToggle'
 import ReadingProgress from '../components/ReadingProgress'
-import IsoPillars from '../components/IsoPillars'
 import { colorOf } from '../stageColors'
 import useLevelProgress from '../hooks/useLevelProgress'
 import useScrollMemory from '../hooks/useScrollMemory'
@@ -12,13 +11,14 @@ import useRevealOnScroll from '../hooks/useRevealOnScroll'
 import { readLevelReading } from '../hooks/progressStorage'
 import './level.css'
 
+const StageFigure = lazy(() => import('../iso/StageFigure'))
+
 const pad = n => String(n).padStart(2, '0')
 
 const stateLevelRef = { current: null }
 
 export default function LevelPage() {
   const { levelId } = useParams()
-  const navigate = useNavigate()
   useScrollMemory()
   const pageRef = useRef(null)
   useRevealOnScroll(pageRef)
@@ -144,25 +144,26 @@ export default function LevelPage() {
                 <span className="kicker">Etapa {stage.id} de {stages.length}</span>
                 <h2 className="level-stage-title">{stage.title}</h2>
                 <p className="level-stage-sub">
-                  Este es el nivel {stageIdx + 1} de {stageLevels.length} de la etapa. Recorré los pilares para ver
-                  el resto de niveles.
+                  Este es el nivel {stageIdx + 1} de {stageLevels.length} de la etapa. La figura muestra la idea
+                  central de la etapa: movela con el cursor o con las flechas.
                 </p>
+                <nav className="level-stage-levels" aria-label={`Niveles de la etapa ${stage.id}`}>
+                  {stageLevels.map(l => (
+                    <Link
+                      key={l.id}
+                      className={`level-stage-level${l.id === level.id ? ' cur' : ''}`}
+                      to={`/nivel/${l.id}`}
+                      aria-current={l.id === level.id ? 'page' : undefined}
+                    >
+                      <span className="n">{pad(l.id)}</span>
+                      {contentRegistry[l.id]?.meta.title || l.title}
+                    </Link>
+                  ))}
+                </nav>
               </div>
-              <IsoPillars
-                items={stageLevels.map(l => ({
-                  letter: pad(l.id),
-                  title: contentRegistry[l.id]?.meta.title || l.title,
-                  sub: l.id === level.id ? 'Nivel actual' : `${contentRegistry[l.id]?.modules.length || l.moduleCount} módulos`,
-                }))}
-                color={colorOf(stage)}
-                homeIdx={stageIdx}
-                autoStart={false}
-                label={`Etapa ${stage.id}, ${stage.title}`}
-                onSelect={i => {
-                  const l = stageLevels[i]
-                  if (l && l.id !== level.id) navigate(`/nivel/${l.id}`)
-                }}
-              />
+              <Suspense fallback={<div className="level-stage-ph" aria-hidden="true" />}>
+                <StageFigure stageId={stage.id} color={colorOf(stage)} fig={`Fig ${stage.id}`} />
+              </Suspense>
             </div>
           </section>
         )}
