@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CodeBlock from './CodeBlock'
 import FlowDiagram, { looksLikeFlow } from './FlowDiagram'
 import Inline from './InlineText'
@@ -493,16 +493,119 @@ function QuizSection({ kicker, questions, answers }) {
   )
 }
 
-export default function ModuleContent({ content, accent }) {
-  const { sections } = parseModule(content)
-  // Pair each quiz section with the immediately following answers section
-  for (let i = 0; i < sections.length; i++) {
-    if (sections[i].type === 'quiz' && sections[i + 1]?.type === 'answers') {
-      const answerItems = sections[i + 1].blocks.flatMap(b =>
-        b.type === 'ordered' ? b.items : []
-      )
-      sections[i].answerItems = answerItems
+// Etiqueta corta para el índice lateral
+function tocLabel(sec) {
+  if (sec.type === 'quiz') return 'Autoevaluación'
+  return sec.kicker || cleanTitle(sec.title) || 'Sección'
+}
+
+// El módulo se lee de a una sección: índice flotante a la izquierda y, en
+// el contenido, solo la sección activa con «anterior / siguiente» al pie.
+export default function ModuleContent({ content, accent, onProgress, onFinish }) {
+  const { sections: all } = parseModule(content)
+  // Empareja cada autoevaluación con sus respuestas
+  for (let i = 0; i < all.length; i++) {
+    if (all[i].type === 'quiz' && all[i + 1]?.type === 'answers') {
+      all[i].answerItems = all[i + 1].blocks.flatMap(b => (b.type === 'ordered' ? b.items : []))
     }
   }
-  return sections.map((sec, i) => <SectionBlocks key={i} section={sec} accent={accent} />)
+  const sections = all.filter(sec => sec.type !== 'answers' && sec.blocks.length)
+  const [active, setActive] = useState(0)
+  const [seen, setSeen] = useState(() => new Set([0]))
+  const topRef = useRef(null)
+  const tocRef = useRef(null)
+  const total = sections.length
+  const cur = Math.min(active, Math.max(0, total - 1))
+
+  useEffect(() => {
+    setSeen(prev => (prev.has(cur) ? prev : new Set(prev).add(cur)))
+    // En móvil el índice es una fila desplazable: centrar el chip activo
+    const box = tocRef.current
+    const item = box?.querySelector('.mod-toc-item.on')
+    if (box && item && box.scrollWidth > box.clientWidth) {
+      box.scrollTo({ left: item.offsetLeft - box.clientWidth / 2 + item.offsetWidth / 2, behavior: 'smooth' })
+    }
+  }, [cur])
+  useEffect(() => {
+    if (!total) return
+    onProgress && onProgress(Math.round((seen.size / total) * 100))
+    if (cur === total - 1) onFinish && onFinish()
+  }, [seen, cur, total, onProgress, onFinish])
+
+  const go = i => {
+    if (i < 0 || i >= total || i === cur) return
+    setActive(i)
+    // Si el inicio del contenido quedó arriba de la pantalla, volver a él
+    const el = topRef.current
+    if (el) {
+      const top = el.getBoundingClientRect().top
+      const nav = 80
+      if (top < nav) window.scrollTo({ top: window.scrollY + top - nav - 8, behavior: 'smooth' })
+    }
+  }
+
+  if (!total) return null
+  const prev = cur > 0 ? sections[cur - 1] : null
+  const next = cur < total - 1 ? sections[cur + 1] : null
+
+  return (
+    <div className="mod-layout" ref={topRef}>
+      <aside className="mod-toc" aria-label="Secciones del módulo">
+        <div className="mod-toc-inner" ref={tocRef}>
+          <div className="mod-toc-head">
+            <span className="mod-toc-k">Secciones</span>
+            <span className="mod-toc-count">{cur + 1}/{total}</span>
+          </div>
+          <div className="mod-toc-bar" aria-hidden="true">
+            <span style={{ width: `${(seen.size / total) * 100}%` }} />
+          </div>
+          <ol className="mod-toc-list">
+            {sections.map((sec, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  className={`mod-toc-item${i === cur ? ' on' : ''}${seen.has(i) && i !== cur ? ' seen' : ''}`}
+                  aria-current={i === cur ? 'step' : undefined}
+                  onClick={() => go(i)}
+                >
+                  <span className="mod-toc-n" aria-hidden="true">{seen.has(i) && i !== cur ? '✓' : String(i + 1).padStart(2, '0')}</span>
+                  <span className="mod-toc-t">{tocLabel(sec)}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </aside>
+
+      <div className="mod-section">
+        <div className="mod-section-body" key={cur}>
+          <SectionBlocks section={sections[cur]} accent={accent} />
+        </div>
+        <nav className="mod-sec-nav" aria-label="Navegación entre secciones">
+          {prev ? (
+            <button type="button" className="mod-sec-btn prev" onClick={() => go(cur - 1)}>
+              <span className="mod-sec-arrow" aria-hidden="true">←</span>
+              <span>
+                <span className="mod-sec-k">Anterior</span>
+                <span className="mod-sec-t">{tocLabel(prev)}</span>
+              </span>
+            </button>
+          ) : (
+            <span />
+          )}
+          {next ? (
+            <button type="button" className="mod-sec-btn next" onClick={() => go(cur + 1)}>
+              <span>
+                <span className="mod-sec-k">Siguiente sección</span>
+                <span className="mod-sec-t">{tocLabel(next)}</span>
+              </span>
+              <span className="mod-sec-arrow" aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <span className="mod-sec-end">Fin del módulo ✓</span>
+          )}
+        </nav>
+      </div>
+    </div>
+  )
 }
