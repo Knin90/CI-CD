@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useNavigationType, useParams } from 'react-router-dom'
 import { flushSync } from 'react-dom'
 import { getLevel, levels, stages } from '../registry'
@@ -55,56 +55,17 @@ export default function ModulePage() {
   // indica (location.state.dir); con atrás/adelante (POP) se usa un fade neutro.
   const dir = navType === 'POP' ? 'fade' : location.state?.dir ?? 'fade'
 
-  // Auto-marcado: el módulo queda «leído» cuando el alumno llega al final de
-  // su contenido (equivalente al scrollspy de la página antigua).
-  const endRef = useRef(null)
-  useEffect(() => {
-    if (!module) return
-    const el = endRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(
-      entries => {
-        entries.forEach(en => {
-          if (en.isIntersecting) markMany([module.id])
-        })
-      },
-      { threshold: 0.15 }
-    )
-    io.observe(el)
-    return () => io.disconnect()
+  // Progreso del módulo: se lee de a una sección. El % de lectura es la
+  // parte de secciones vistas y el módulo queda «leído» al llegar a la última.
+  const onProgress = useCallback(
+    pct => {
+      if (level && module) saveReadingPct(level.id, module.id, pct)
+    },
+    [level, module]
+  )
+  const onFinish = useCallback(() => {
+    if (module) markMany([module.id])
   }, [module, markMany])
-
-  // Porcentaje de lectura: guarda en localStorage (od-reading) el máximo
-  // alcanzado de scroll del módulo actual, throttled con requestAnimationFrame.
-  // Nunca retrocede (el avance persiste aunque vuelvas a subir).
-  useEffect(() => {
-    if (!module || !level) return
-    let raf = 0
-    let lastPct = 0
-    const compute = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      lastPct = max > 0 ? Math.min(window.scrollY / max, 1) * 100 : 100
-    }
-    const save = () => {
-      compute()
-      saveReadingPct(level.id, module.id, lastPct)
-    }
-    const onScroll = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(save)
-    }
-    save()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    return () => {
-      cancelAnimationFrame(raf)
-      // Persiste el último % conocido del módulo (sin releer el scroll del
-      // nivel nuevo, que ya puede haberse movido al desmontar).
-      saveReadingPct(level.id, module.id, lastPct)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-    }
-  }, [level, module])
 
   // Navegación con transición de página completa (View Transitions) cuando
   // está disponible; fallback: navegación normal + animación CSS de entrada.
@@ -254,15 +215,13 @@ export default function ModulePage() {
         {/* ---------- CONTENIDO ---------- */}
         <div className={`container module-body${enterClass}`} key={module.id}>
           {content ? (
-            <ModuleContent content={content} accent={colorOf(stage)} />
+            <ModuleContent content={content} accent={colorOf(stage)} onProgress={onProgress} onFinish={onFinish} />
           ) : (
             <div className="b card">
               <span className="kicker">Próximamente</span>
               <p>Este módulo está en desarrollo.</p>
             </div>
           )}
-          {/* Centinela para el auto-marcado al llegar al final */}
-          <div ref={endRef} className="module-end" aria-hidden="true" />
         </div>
 
         {/* ---------- NAVEGACIÓN ENTRE MÓDULOS ---------- */}
